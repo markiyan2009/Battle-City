@@ -1,0 +1,9 @@
+from pygame import*
+WHITE = (255,255,255)
+BLACK = (0,0,0)
+fps = 30
+win_width = 900
+win_heigth = 600
+main_win = display.set_mode((win_width,win_heigth))
+clock = time.Clock()
+run = True
