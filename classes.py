@@ -1,4 +1,4 @@
-rom pygame import*
+from pygame import*
 from abc import abstractmethod
 import os
 #PATH - місце розташування папки на компі
