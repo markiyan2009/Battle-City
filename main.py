@@ -15,7 +15,7 @@ map_list = [
 draw_Map = draw_map(map_list)
 while run:
     for even in event.get():
-        if even.type == K_DOWN:
+        if even.type == KEYDOWN:
             if even.key == K_ESCAPE:
                 run = False
     
