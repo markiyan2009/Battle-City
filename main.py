@@ -1,6 +1,6 @@
 from classes import *
 player_img = PATH +"img/player_tank.png"
-tank = PlayerTank(player_img,win_heigth,win_width/2)
+tank = PlayerTank(player_img,size_object,size_object)
 
 map_list = [
     [0,0,"b","b",0,0,"b","b",0,0,"b","b",0,0,"b","b",0,0],
