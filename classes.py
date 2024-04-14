@@ -1,20 +1,14 @@
-from pygame import*
+      
+from config import*
+
 from abc import abstractmethod
-import os
+
+import math
 #PATH - місце розташування папки на компі
 PATH = os.path.dirname(__file__) + os.path.sep
 
-WHITE = (255,255,255)
-BLACK = (0,0,0)
-fps = 30
-size_object = 50
-win_width = 900
-win_heigth = 600
-main_win = display.set_mode((win_width,win_heigth))
-clock = time.Clock()
 
-run = True
-speed = 5
+
 block_list = sprite.Group()
 iron_block = PATH +"img/iron.jpg"
 brick_img = PATH +"img/brick.jpg"
@@ -72,8 +66,9 @@ class GameSprite(sprite.Sprite):
         self.rect.y = y
         self.last_x = self.rect.x
         self.last_y = self.rect.y
+        self.bullets = sprite.Group()
         # куда повернена картинка
-        self.angle = 0
+        self.direction = "down"
         self.last_direction = "up"
     # поява спрайта
     def reset(self):
@@ -85,8 +80,39 @@ class Tank(GameSprite):
     @abstractmethod
     def update(self):
         pass
+
     def shoot(self):
-        pass
+        
+        bullet = Bullet(self)
+        self.bullets.add(bullet)
+        
+    def calculate_image_rotate(self,future_direction):
+        if self.last_direction == "up" and future_direction == "right":
+           self.image = transform.rotate(self.image, -90)
+        if self.last_direction == "up" and future_direction == "left":
+           self.image = transform.rotate(self.image, 90)
+        if self.last_direction == "up" and future_direction == "down":
+           self.image = transform.rotate(self.image, 180)
+        if self.last_direction == "down" and future_direction == "right":
+           self.image = transform.rotate(self.image, 90)
+        if self.last_direction == "down" and future_direction == "left":
+           self.image = transform.rotate(self.image, -90)
+        if self.last_direction == "down" and future_direction == "up":
+           self.image = transform.rotate(self.image, -180)
+        if self.last_direction == "right" and future_direction == "up":
+           self.image = transform.rotate(self.image, 90)
+        if self.last_direction == "right" and future_direction == "down":
+           self.image = transform.rotate(self.image, -90)
+        if self.last_direction == "right" and future_direction == "left":
+           self.image = transform.rotate(self.image, 180)
+        if self.last_direction == "left" and future_direction == "right":
+           self.image = transform.rotate(self.image, 180)
+        if self.last_direction == "left" and future_direction == "up":
+           self.image = transform.rotate(self.image, -90)
+        if self.last_direction == "left" and future_direction == "down":
+           self.image = transform.rotate(self.image, 90)
+
+            
 # клас гравця
 class PlayerTank(Tank):
     
@@ -96,27 +122,94 @@ class PlayerTank(Tank):
         if keys_pressed[K_a]:
             self.last_x = self.rect.x
             self.rect.x -=speed
-            
+            self.calculate_image_rotate("left")
+            self.last_direction = "left"
             
         elif keys_pressed[K_d]:
             self.last_x = self.rect.x
             self.rect.x +=speed
-             
+            self.calculate_image_rotate("right")
+            self.last_direction = "right"
+            
         elif keys_pressed[K_w]:
             self.last_y = self.rect.y
             self.rect.y -=speed
+            self.calculate_image_rotate("up")
+            self.last_direction = "up"
+            
         elif keys_pressed[K_s]:
             self.last_y = self.rect.y
             self.rect.y +=speed
+            self.calculate_image_rotate("down")
+            self.last_direction = "down"
+            
         if sprite.spritecollide(self,block_list, False):
 
             self.rect.x = self.last_x
             self.rect.y = self.last_y
-class EnemyTank(GameSprite):
-    def update(self):
-        pass
+    
+        
+class EnemyTank(Tank):
+    def update(self, target):
+        if self.rect.y > target.rect.y:
+            
+            self.direction = "up"
+        elif self.rect.y < target.rect.y:
+            self.direction ="down"
+        elif self.rect.x > target.rect.x:
+            
+            self.direction = "left"
+
+        elif self.rect.x < target.rect.x:
+            self.direction = "right"
+           
+       
+            
+
+        if self.direction == "down":
+            self.rect.y += speed
+        elif self.direction == "up":
+            self.rect.y -= speed
+        elif self.direction == "right":
+            self.rect.x += speed
+        elif self.direction == "left":
+            self.rect.x -= speed
+        
+
 class Bullet(sprite.Sprite):
-    def __init__(self,x,top):
+    def __init__(self,owner):
+        super().__init__()
         self.image = transform.scale(image.load(PATH + "img/bullet.png"),(30,30))
+        self.rect = self.image.get_rect()
+        self.direction = owner.last_direction
+        self.rect.x = owner.rect.x
+        self.rect.y = owner.rect.y
+        if self.direction == "right":
+            self.image = transform.rotate(self.image,-90)
+            
+        elif self.direction == "left":
+            self.image = transform.rotate(self.image,90)
+        if self.direction == "down":
+            self.image = transform.rotate(self.image,180)
+    def update(self):
+        if self.rect.x <=0 or self.rect.x >= win_width or self.rect.y<=0 or self.rect.y >=win_heigth:
+            self.kill()
+            print("no bullet")
+        if self.direction == "up":
+            self.rect.y -= bullet_speed
+        elif self.direction == "right":
+            self.rect.x += bullet_speed
+        elif self.direction == "left":
+            self.rect.x -= bullet_speed
+        elif self.direction == "down":
+            self.rect.y += bullet_speed
         
         
+    
+    
+         
+            
+        
+        
+
+       
