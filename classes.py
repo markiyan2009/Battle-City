@@ -1,6 +1,5 @@
-      
-from config import*
-
+ from config import*
+from time import time as timer
 from abc import abstractmethod
 
 import math
@@ -9,11 +8,13 @@ PATH = os.path.dirname(__file__) + os.path.sep
 
 
 
-block_list = sprite.Group()
+brick_list = sprite.Group()
+iron_list = sprite.Group()
+
 iron_block = PATH +"img/iron.jpg"
 brick_img = PATH +"img/brick.jpg"
 def draw_map(map_list):
-    global block_list 
+    
     last_x = 0
     last_y = 0
     n = 0
@@ -32,7 +33,7 @@ def draw_map(map_list):
                 last_x = 0
             if block == 'b':
                 brick =  GameSprite(brick_img,last_x,last_y)
-                block_list.add(brick)
+                brick_list.add(brick)
                 print(last_x)
                 last_x += size_object
             elif block == 0:
@@ -40,7 +41,7 @@ def draw_map(map_list):
                 last_x+=size_object
             elif block == "i":
                 iron = GameSprite(iron_block,last_x,last_y)
-                block_list.add(iron)
+                iron_list.add(iron)
                 print(last_x)
                 last_x += size_object
             
@@ -48,8 +49,8 @@ def draw_map(map_list):
     
     def closure():
         nonlocal last_line, last_x, last_y
-        block_list.draw(main_win)
-        
+        brick_list.draw(main_win)
+        iron_list.draw(main_win)
         last_x = 0
         last_y = 0
     return closure
@@ -58,8 +59,10 @@ class GameSprite(sprite.Sprite):
     def __init__(self,sprite_image : str, x : int, y : int):
         super().__init__()
         
-        
-        
+        self.hp = 5
+        self.last_time = timer()
+        self.current_time = None
+        self.shoot_time = random.randint(2,4)
         self.image = transform.scale(image.load(sprite_image),(size_object,size_object))
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -142,28 +145,43 @@ class PlayerTank(Tank):
             self.rect.y +=speed
             self.calculate_image_rotate("down")
             self.last_direction = "down"
-            
-        if sprite.spritecollide(self,block_list, False):
+        if sprite.spritecollide(self,iron_list, False) or sprite.spritecollide(self,brick_list, False):
 
             self.rect.x = self.last_x
             self.rect.y = self.last_y
-    
+            
+        
         
 class EnemyTank(Tank):
-    def update(self, target):
+    def set_direction(self,target):
         if self.rect.y > target.rect.y:
             
-            self.direction = "up"
+            self.direction = self.last_direction  = "up"
         elif self.rect.y < target.rect.y:
-            self.direction ="down"
+            self.direction = self.last_direction  ="down"
         elif self.rect.x > target.rect.x:
-            
-            self.direction = "left"
+                
+            self.direction = self.last_direction  = "left"
 
         elif self.rect.x < target.rect.x:
-            self.direction = "right"
-           
-       
+            self.direction = self.last_direction  = "right"
+    def update(self, target):
+        if sprite.spritecollide(self,iron_list,False) or sprite.spritecollide(self,brick_list,False):
+
+            print("collide")
+            self.direction = None
+            if self.rect.x > target.rect.x and self.last_direction != "left":
+                self.direction = "left"
+            elif self.rect.x < target.rect.x and self.last_direction != "right":
+                self.direction = "right"
+            elif self.rect.y > target.rect.y and self.last_direction != "up":
+                self.direction = "up"
+            elif self.rect.y < target.rect.y and self.last_direction != "down":
+                self.direction = "down"
+        else:   
+            self.set_direction(target)
+            
+    
             
 
         if self.direction == "down":
@@ -174,7 +192,12 @@ class EnemyTank(Tank):
             self.rect.x += speed
         elif self.direction == "left":
             self.rect.x -= speed
-        
+        self.current_time = timer()
+        if int(self.current_time) - int(self.last_time) == self.shoot_time:
+            self.shoot()
+            self.shoot_time = random.randint(2,4)
+            self.last_time = timer()
+
 
 class Bullet(sprite.Sprite):
     def __init__(self,owner):
@@ -203,13 +226,7 @@ class Bullet(sprite.Sprite):
             self.rect.x -= bullet_speed
         elif self.direction == "down":
             self.rect.y += bullet_speed
-        
-        
-    
-    
-         
-            
-        
-        
+        if sprite.spritecollide(self,brick_list,True) or sprite.spritecollide(self,iron_list,False):
+            self.kill()
 
-       
+
